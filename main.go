@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"ztm_scanner/schedules"
+	"ztm_scanner/ztm"
 )
 
 func main() {
-	res, err := schedules.GetSchedule("2082")
+	res, err := ztm.GetStopsByName("bajana")
 	if err != nil {
 		fmt.Println(err)
 	}

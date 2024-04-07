@@ -1,4 +1,4 @@
-package schedules
+package ztm
 
 import (
 	"encoding/json"
@@ -35,8 +35,7 @@ func GetSchedule(stopId string) (Schedule, error) {
 	if !json.Valid(respHolder.Body) {
 		return s, fmt.Errorf("valid JSON was not received")
 	}
-	err = json.Unmarshal(respHolder.Body, &s)
-	if err != nil {
+	if err = json.Unmarshal(respHolder.Body, &s); err != nil {
 		err = fmt.Errorf("failed GetSchedule: %w", err)
 	}
 	return s, err
