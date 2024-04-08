@@ -1,14 +1,7 @@
 package ztm
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
-	"ztm_scanner/web/client"
-)
-
-const (
-	departureUrl = "https://ckan2.multimediagdansk.pl/departures?stopId="
 )
 
 type Departure struct {
@@ -20,23 +13,4 @@ type Departure struct {
 type Schedule struct {
 	LastUpdate time.Time
 	Departures []Departure
-}
-
-// Gets the JSON of the transport schedule for the stop identified by stopId and converts it to a Schedule struct.
-func GetSchedule(stopId string) (Schedule, error) {
-	s := Schedule{}
-	respHolder, err := client.GetResponse(departureUrl + stopId)
-	if err != nil {
-		return s, fmt.Errorf("failed GetSchedule: %w", err)
-	}
-	if respHolder.StatusCode == 400 {
-		return s, fmt.Errorf("stop with ID \"%s\" not found", stopId)
-	}
-	if !json.Valid(respHolder.Body) {
-		return s, fmt.Errorf("valid JSON was not received")
-	}
-	if err = json.Unmarshal(respHolder.Body, &s); err != nil {
-		err = fmt.Errorf("failed GetSchedule: %w", err)
-	}
-	return s, err
 }
