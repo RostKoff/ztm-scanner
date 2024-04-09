@@ -5,13 +5,15 @@ import (
 	"fmt"
 )
 
-type provider interface {
+type Provider interface {
+	// Retrieves data from a specific source as an array of bytes.
 	GetByteData() ([]byte, error)
 }
 
 type JsonMapper[T any] struct{}
 
-func (jm *JsonMapper[T]) MapValue(p provider, t *T) error {
+// Retrieves JSON data from the provider and stores it in the value pointed to by 't'.
+func (jm *JsonMapper[T]) MapValue(p Provider, t *T) error {
 	data, err := p.GetByteData()
 	if err != nil {
 		return fmt.Errorf("failed MapValue: %w", err)
