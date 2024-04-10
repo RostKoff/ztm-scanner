@@ -2,23 +2,71 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"ztm_scanner/cli/operations"
 	"ztm_scanner/mappers"
 	"ztm_scanner/providers/web"
 	"ztm_scanner/ztm"
 )
 
-func main() {
-	jm := mappers.JsonMapper[[]ztm.Stop]{}
-	sp := web.StopsProvider{Url: "https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/4c4025f0-01bf-41f7-a39f-d156d201b82b/download/stops.json"}
-	bp := web.ResponseBodyProvider{Url: "https://ckan2.multimediagdansk.pl/departures?stopId="}
-	stops := make([]ztm.Stop, 0)
-	_ = jm.MapValue(&sp, &stops)
-	newStops := ztm.FilterStopsByName("bajana", stops)
-	fmt.Println(newStops)
-	sm := mappers.JsonMapper[ztm.Schedule]{}
-	s := ztm.Schedule{}
-	bp.Url = bp.Url + fmt.Sprint(newStops[2].StopId)
-	_ = sm.MapValue(&bp, &s)
-	fmt.Println(s)
+const (
+	departuresLink = "https://ckan2.multimediagdansk.pl/departures?stopId="
+	welcomeMsg     = `------------
+Welcome to the ZTM Scanner.
+This application is designed to display public transport schedules obtained from ZTM open data.
+------------`
+	menuMsg = `Please select one of the options to find a public transport stop.
 
+[1] - Find by Stop ID
+[2] - Find by Stop Name
+[q] - Quit`
+)
+
+func main() {
+	scheduleMapper := mappers.JsonMapper[ztm.Schedule]{}
+	scheduleProvider := web.ResponseBodyProvider{}
+
+	stopsMapper := mappers.JsonMapper[[]ztm.Stop]{}
+	stopsProvider := web.StopsProvider{}
+	userInput := ""
+
+	fmt.Println(welcomeMsg)
+mainLoop:
+	for {
+		fmt.Println(menuMsg)
+		_, err := fmt.Scan(&userInput)
+		if err != nil {
+			fmt.Printf("Input Error! %s\n", err)
+			continue
+		}
+		switch userInput {
+		case "1":
+			fmt.Printf("Enter Stop ID: ")
+			_, err := fmt.Scan(&userInput)
+			if err != nil {
+				fmt.Printf("Input Error! %s\n", err)
+				continue
+			}
+		case "2":
+			stopId, err := operations.FindStopsAndChoose(&stopsProvider, &stopsMapper)
+			if err != nil {
+				fmt.Printf("Error! %s\n", err)
+				continue
+			}
+			if stopId == -1 {
+				continue
+			}
+			userInput = strconv.Itoa(stopId)
+		case "q":
+			break mainLoop
+		default:
+			fmt.Printf("\nInvalid option.\n")
+			continue
+		}
+		scheduleProvider.Url = departuresLink + userInput
+		err = operations.GetAndDisplaySchedule(&scheduleProvider, &scheduleMapper)
+		if err != nil {
+			fmt.Printf("Error! %s\n", err)
+		}
+	}
 }
